@@ -1,0 +1,9 @@
+{
+  "source_id": "test-001",
+  "rule_id": "5712",
+  "rule_desc": "sshd: brute force trying to get access",
+  "severity": 10,
+  "agent_name": "kali-lab",
+  "agent_ip": "192.168.56.10",
+  "src_ip": "8.8.8.8"
+}

@@ -4,6 +4,7 @@ from datetime import datetime
 import httpx, redis.asyncio as aioredis
 from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from ipaddress import IPv4Address, IPv6Address
 from .config import REDIS_URL
 from .db import (create_pool, alert_exists, save_alert, get_criticality,
                  update_score, update_summary, rule_frequency)
@@ -20,8 +21,8 @@ class AlertIn(BaseModel):
     rule_desc: str
     severity: int
     agent_name: str
-    agent_ip: str | None = None
-    src_ip: str | None = None
+    agent_ip: IPv4Address | IPv6Address | None = None
+    src_ip: IPv4Address | IPv6Address | None = None
     wazuh_mitre_ids: list[str] = []
 
 @asynccontextmanager
@@ -50,9 +51,9 @@ async def ingest(alert: AlertIn, bg: BackgroundTasks):
     if await alert_exists(s.pool, alert.source_id):
         return {"status": "duplicate", "source_id": alert.source_id}
 
-    a = alert.model_dump()
+    a = alert.model_dump(mode="json")
     technique = await map_alert(s.rdb, alert.rule_id, alert.wazuh_mitre_ids)
-    enrichment = await enrich_ip(s.http, s.rdb, alert.src_ip)
+    enrichment = await enrich_ip(s.http, s.rdb, a.get("src_ip"))
     alert_id = await save_alert(s.pool, a, technique, enrichment)
 
     crit = await get_criticality(s.pool, alert.agent_name)

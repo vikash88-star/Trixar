@@ -1,9 +1,9 @@
 {
-  "source_id": "test-002",
+  "source_id": "test-004",
   "rule_id": "31104",
   "rule_desc": "Web attack: common SQL injection pattern",
   "severity": 12,
   "agent_name": "kali-lab",
   "agent_ip": "192.168.56.10",
-  "src_ip": "203.0.113.50"
+  "src_ip": "8.8.8.8"
 }

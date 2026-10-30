@@ -28,8 +28,12 @@ async def shodan(client, ip):
 async def enrich_ip(client, rdb, ip: str | None) -> dict:
     if not ip:
         return {"skipped": "no source ip"}
-    if ipaddress.ip_address(ip).is_private:
-        return {"skipped": "private ip"}
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return {"skipped": "invalid ip"}
+    if not addr.is_global:
+        return {"skipped": "non-public ip"}
 
     cached = await rdb.get(f"rep:{ip}")
     if cached:

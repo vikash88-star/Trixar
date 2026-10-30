@@ -1,8 +1,9 @@
-import asyncio
+import asyncio, os
 from contextlib import asynccontextmanager
 from datetime import datetime
 import httpx, redis.asyncio as aioredis
 from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ipaddress import IPv4Address, IPv6Address
 from .config import REDIS_URL
@@ -38,6 +39,20 @@ async def lifespan(app: FastAPI):
     await app.state.rdb.aclose()
 
 app = FastAPI(title="Trixar", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"],
+                   allow_methods=["*"], allow_headers=["*"])
+
+async def fire_soar(payload: dict):
+    """Tell n8n about a high-priority alert. Never lets a SOAR failure break triage."""
+    url = os.getenv("SOAR_WEBHOOK")
+    if not url:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            r = await c.post(url, json=payload)
+            print("soar:", r.status_code)
+    except Exception as e:
+        print("soar error:", e)
 
 async def ai_job(alert_id: int, alert: dict, technique, enrichment):
     """Runs AFTER the response is sent. Slow, so it never blocks triage."""
@@ -68,6 +83,10 @@ async def ingest(alert: AlertIn, bg: BackgroundTasks):
         (enrichment.get("abuseipdb") or {}).get("abuse_score", 0),
         crit, datetime.now().hour, freq]})
 
+    if score >= float(os.getenv("SOAR_THRESHOLD", "70")):
+        bg.add_task(fire_soar, {"alert_id": alert_id, "score": score,
+                                "src_ip": a.get("src_ip"), "rule": alert.rule_desc,
+                                "technique": technique["id"] if technique else None})
     bg.add_task(ai_job, alert_id, a, technique, enrichment)    # async, non-blocking
     await manager.broadcast({"type": "new_alert", "alert_id": alert_id, "score": score})
 
@@ -94,3 +113,12 @@ async def ws_endpoint(ws: WebSocket):
 @app.get("/health")
 async def health():
     return {"ok": True}
+
+
+@app.get("/stats/techniques")
+async def technique_stats():
+    rows = await app.state.pool.fetch(
+        """SELECT technique_id, count(*) AS count, max(priority_score) AS max_score
+           FROM alerts WHERE technique_id IS NOT NULL
+           GROUP BY technique_id ORDER BY count DESC""")
+    return [dict(r) for r in rows]

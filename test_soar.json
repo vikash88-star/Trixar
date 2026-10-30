@@ -1,0 +1,9 @@
+{
+  "source_id": "soar-001",
+  "rule_id": "31104",
+  "rule_desc": "Web attack: common SQL injection pattern",
+  "severity": 13,
+  "agent_name": "kali-lab",
+  "agent_ip": "192.168.56.10",
+  "src_ip": "1.1.1.1"
+}

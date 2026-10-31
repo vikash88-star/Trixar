@@ -50,7 +50,7 @@ async def fire_soar(payload: dict):
     try:
         async with httpx.AsyncClient(timeout=10) as c:
             r = await c.post(url, json=payload)
-            print("soar:", r.status_code)
+            print("soar:", r.status_code, r.text[:300])
     except Exception as e:
         print("soar error:", e)
 

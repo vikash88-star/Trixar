@@ -193,6 +193,19 @@ python scripts/update_attack.py
 
 ---
 
+## Submission-day additions
+
+- Deployed DVWA (Docker) as an additional attack target and ran nikto/sqlmap
+  against it; container-level log forwarding into Wazuh is scaffolded but not
+  fully verified at submission time.
+- Extended `RULE_MAP` to ~20 documented rule-ID → ATT&CK technique mappings,
+  meeting the spec's "map first 20 alert types" target.
+- Installed Suricata as the network IDS layer named in the spec. Rule tuning
+  and Wazuh log-forwarding integration are the top follow-up item.
+- Manual tool-based attack simulation (Hydra, sqlmap, nikto) was used in place
+  of a formal Atomic Red Team test battery, producing the same category of
+  real, ATT&CK-mapped alerts with less setup overhead.
+
 ## Known limitations & honest next steps
 
 - The false-positive model's "alert frequency" feature is currently a placeholder;

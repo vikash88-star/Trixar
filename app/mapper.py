@@ -10,6 +10,7 @@ RULE_MAP = {
     "5763": "T1110",      # sshd brute force
     "31103": "T1190",     # SQL injection attempt on web server
     "31104": "T1190",     # common web attack
+    "533": "T1046",       # netstat: listened ports changed (discovery / possible backdoor listener)
 }
 
 async def map_alert(rdb, rule_id: str, wazuh_mitre_ids: list[str]) -> dict | None:

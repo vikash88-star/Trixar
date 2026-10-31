@@ -122,3 +122,13 @@ async def technique_stats():
            FROM alerts WHERE technique_id IS NOT NULL
            GROUP BY technique_id ORDER BY count DESC""")
     return [dict(r) for r in rows]
+
+
+@app.patch("/alerts/{alert_id}/label")
+async def label_alert(alert_id: int, label: dict):
+    """label = {"status": "true_positive"} or {"status": "false_positive"}"""
+    status = label.get("status")
+    if status not in ("true_positive", "false_positive", "new"):
+        return {"error": "status must be true_positive, false_positive, or new"}
+    await app.state.pool.execute("UPDATE alerts SET status=$1 WHERE id=$2", status, alert_id)
+    return {"id": alert_id, "status": status}

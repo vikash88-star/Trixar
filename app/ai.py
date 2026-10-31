@@ -1,7 +1,7 @@
 import httpx
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "llama3.2:3b"
+MODEL = "llama3.2:1b"
 
 PROMPT = """You are a SOC analyst assistant. Use ONLY the facts below. Do not invent details.
 Answer in exactly 3 short sentences:
